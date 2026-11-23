@@ -1,5 +1,12 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161d29" media="(prefers-color-scheme: dark)">
 <title>Magyar dogalog</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232f5bd3'/%3E%3Cpath d='M9 17l5 5 9-12' stroke='%23d3342a' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&family=Caveat:wght@700&display=swap">
@@ -27,17 +34,20 @@
   --f-hand:"Caveat","Segoe Print","Comic Sans MS",cursive;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --paper:#0f141d;--grid:rgba(124,156,255,.05);--card:#161d29;--ink:#e5eaf4;--muted:#97a2b7;--line:#273143;--track:#232c3c;
+  --paper:#0f141d;--grid:rgba(124,156,255,.05);--card:#161d29;--ink:#e5eaf4;--muted:#97a2b7;--line:#273143;--track:#2b3548;
   --accent:#86a2ff;--accent-soft:rgba(134,162,255,.13);--red:#ff6a5c;--red-soft:rgba(255,106,92,.14);--green:#45c48b;--green-soft:rgba(69,196,139,.14);
   --gray:#76819a;--gray-soft:rgba(118,129,154,.18);--shadow:0 1px 2px rgba(0,0,0,.3);color-scheme:dark}}
 :root[data-theme="dark"]{
-  --paper:#0f141d;--grid:rgba(124,156,255,.05);--card:#161d29;--ink:#e5eaf4;--muted:#97a2b7;--line:#273143;--track:#232c3c;
+  --paper:#0f141d;--grid:rgba(124,156,255,.05);--card:#161d29;--ink:#e5eaf4;--muted:#97a2b7;--line:#273143;--track:#2b3548;
   --accent:#86a2ff;--accent-soft:rgba(134,162,255,.13);--red:#ff6a5c;--red-soft:rgba(255,106,92,.14);--green:#45c48b;--green-soft:rgba(69,196,139,.14);
   --gray:#76819a;--gray-soft:rgba(118,129,154,.18);--shadow:0 1px 2px rgba(0,0,0,.3);color-scheme:dark}
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+html{color-scheme:light}
 body{
+  margin:0;
+  padding-bottom:env(safe-area-inset-bottom,0px);
   background-color:var(--paper);
   background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
   background-size:22px 22px;
@@ -177,6 +187,8 @@ main{max-width:720px;margin:0 auto;padding-block:20px 48px;
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
+</head>
+<body>
 
 <header class="top">
   <div class="top-in">
@@ -222,8 +234,12 @@ main{max-width:720px;margin:0 auto;padding-block:20px 48px;
 </main>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script>
-(function(){
+<script type="module">
+import { firebaseConfig } from "./firebase-config.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
 // Órarend: hét napja (0=vasárnap) -> magyarórák
 const SCHEDULE = {
   1:[{p:6,s:"Irodalom"}],
@@ -240,7 +256,7 @@ const MONTHS = ["január","február","március","április","május","június","j
 const LABEL = {igen:"Írtunk",nem:"Nem írtunk",elmaradt:"Nem volt óra"};
 
 let records = new Map();
-let db = null, dbState = "loading", canWrite = true, gotData = false, slow = false;
+let db = null, dbState = "loading", canWrite = false, authState = "pending", gotData = false, slow = false;
 const ui = {view:"fo", filter:"mind", editing:null, confirmDel:null, drafts:{}, pickDate:""};
 const chains = {};
 
@@ -293,23 +309,23 @@ function save(lesson, patch){
   };
   if (body.status !== "igen") body.topic = "";
   records.set(lesson.id, body); render();
-  const ref = db.collection("orak").doc(lesson.id);
-  chains[lesson.id] = (chains[lesson.id] || Promise.resolve()).then(() => ref.set(body)).then(
-    () => toast(patch.topic !== undefined ? "Téma mentve" : "Mentve: " + LABEL[body.status]),
-    e => handleWriteError(e)
-  );
+  // Offline is működik: a Firestore helyben eltárolja, és feltölti, amint van net.
+  toast(patch.topic !== undefined ? "Téma mentve" : "Mentve: " + LABEL[body.status]);
+  const ref = doc(db, "orak", lesson.id);
+  chains[lesson.id] = (chains[lesson.id] || Promise.resolve()).then(() => setDoc(ref, body)).catch(handleWriteError);
 }
 function remove(id){
   if (!writable()) return;
   records.delete(id); ui.editing = null; ui.confirmDel = null; render();
-  const ref = db.collection("orak").doc(id);
-  chains[id] = (chains[id] || Promise.resolve()).then(() => ref.delete()).then(
-    () => toast("Bejegyzés törölve"), e => handleWriteError(e));
+  toast("Bejegyzés törölve");
+  const ref = doc(db, "orak", id);
+  chains[id] = (chains[id] || Promise.resolve()).then(() => deleteDoc(ref)).catch(handleWriteError);
 }
 function handleWriteError(e){
+  console.error(e);
   const code = e && e.code;
-  if (code === "invalid_argument") { canWrite = false; render(); toast("Nincs jogod szerkeszteni ezt az oldalt."); }
-  else if (code === "quota_exceeded") toast("Megtelt az adatbázis.");
+  if (code === "permission-denied") toast("A szerver elutasította a mentést.");
+  else if (code === "resource-exhausted") toast("Elfogyott a napi Firebase-keret.");
   else toast("Nem sikerült menteni. Próbáld újra.");
 }
 
@@ -356,10 +372,10 @@ function histRow(id, r){
 /* ---------- nézetek ---------- */
 function renderNotes(){
   const n = [];
-  if (dbState === "none") n.push(`<div class="note warn">Az adatok most nem érhetők el. Jelentkezz be a claude.ai-ra, és nyisd meg újra az oldalt.</div>`);
-  else if (dbState === "error") n.push(`<div class="note warn">Megszakadt a kapcsolat az adatokkal. Töltsd újra az oldalt.</div>`);
+  if (dbState === "noconfig") n.push(`<div class="note warn">Hiányzik a Firebase beállítás. Másold be a projekt adatait a <b>firebase-config.js</b> fájlba.</div>`);
+  else if (dbState === "error") n.push(`<div class="note warn">Nem sikerült betölteni az adatokat (${esc(dbErrorCode)}). Töltsd újra az oldalt.</div>`);
   else if (slow && !gotData) n.push(`<div class="note">Még nem jöttek meg az adatok. Ellenőrizd az internetkapcsolatot.</div>`);
-  if (db && !canWrite) n.push(`<div class="note">Csak megtekintési jogod van, ezért nem tudsz válaszolni. Kérj szerkesztési jogot attól, aki megosztotta.</div>`);
+  if (db && authState === "failed") n.push(`<div class="note warn">Nem sikerült belépni, ezért most nem tudsz válaszolni. Ellenőrizd, hogy a Firebase-ben be van-e kapcsolva a névtelen (Anonymous) bejelentkezés.</div>`);
   $("notes").innerHTML = n.join("");
   $("notes").hidden = !n.length;
 }
@@ -401,7 +417,7 @@ function computeStats(){
 }
 
 function renderStats(){
-  if (!gotData && dbState === "loading"){
+  if (!gotData && (dbState === "loading" || dbState === "ok")){
     $("stats").innerHTML = `<div class="stat-card"><p class="lead" style="margin:0;color:var(--muted)">Adatok betöltése…</p></div>`;
     $("stat-hint").textContent = ""; return;
   }
@@ -461,7 +477,7 @@ function renderHistory(){
   const chipsDef = [["mind","Mind"],["igen","Írtunk"],["nem","Nem írtunk"],["elmaradt","Nem volt óra"]];
   $("chips").innerHTML = chipsDef.map(([k,t]) => `<button class="chip" data-act="filter" data-v="${k}" aria-pressed="${ui.filter===k}">${t}<span class="c">${cnt[k]}</span></button>`).join("");
   const rows = all.filter(([,r]) => ui.filter === "mind" || r.status === ui.filter);
-  if (!gotData && dbState === "loading"){ $("history").innerHTML = `<div class="empty">Betöltés…</div>`; return; }
+  if (!gotData && (dbState === "loading" || dbState === "ok")){ $("history").innerHTML = `<div class="empty">Betöltés…</div>`; return; }
   if (!rows.length){
     $("history").innerHTML = `<div class="empty">${all.length ? "Ebben a szűrőben nincs óra." : "Még nincs bejegyzés. Az Áttekintés fülön válaszolj a mai órára, vagy lent rögzíts egy régebbit."}</div>`;
     return;
@@ -549,27 +565,40 @@ window.addEventListener("hashchange", fromHash);
 /* ---------- indulás ---------- */
 fromHash();
 
-async function boot(){
-  if (!window.claude || typeof window.claude.use !== "function"){ dbState = "none"; render(); return; }
-  const [d, u] = await Promise.all([
-    window.claude.use("db").catch(() => null),
-    window.claude.use("user").catch(() => null)
-  ]);
-  if (u){ try { const c = await u.can("data.write"); if (c === false) canWrite = false; } catch(e){} }
-  if (!d){ dbState = "none"; render(); return; }
-  db = d; dbState = "ok"; render();
+let dbErrorCode = "";
+function boot(){
+  if (!firebaseConfig.projectId || firebaseConfig.projectId === "PROJEKT-ID"){ dbState = "noconfig"; render(); return; }
+  const app = initializeApp(firebaseConfig);
+  try {
+    db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+  } catch (e) {
+    db = initializeFirestore(app, {});
+  }
+  dbState = "ok"; render();
+
+  // Névtelen belépés: senkinek nem kell fiók, de írni csak belépve lehet (lásd firestore.rules).
+  const auth = getAuth(app);
+  onAuthStateChanged(auth, user => {
+    if (user){ authState = "ok"; canWrite = true; render(); }
+  });
+  signInAnonymously(auth).catch(e => {
+    console.error(e); authState = "failed"; canWrite = false; render();
+  });
+
   const timer = setTimeout(() => { slow = true; render(); }, 10000);
-  db.collection("orak").onSnapshot(snap => {
-    records = new Map(snap.docs.filter(x => x.exists).map(x => [x.id, x.data()]));
+  onSnapshot(collection(db, "orak"), { includeMetadataChanges: true }, snap => {
+    records = new Map(snap.docs.map(x => [x.id, x.data()]));
     gotData = true;
     if (!snap.metadata.fromCache){ clearTimeout(timer); slow = false; }
     render();
   }, err => {
+    console.error(err);
     clearTimeout(timer);
-    dbState = err && err.code === "revoked" ? "none" : "error"; gotData = true;
+    dbState = "error"; dbErrorCode = err && err.code || "ismeretlen hiba"; gotData = true;
     render();
   });
 }
 boot();
-})();
 </script>
+</body>
+</html>

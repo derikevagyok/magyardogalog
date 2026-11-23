@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "magyardogalog",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "C:\\Users\\user\\AppData\\Local\\Temp\\claude\\712fadf104e2453e\\e37cb186-6c42-4da6-b800-5de7ca53fc4e\\scratchpad\\serve.ps1", "-Root", "C:\\Users\\user\\Desktop\\progi\\magyardogalog", "-Port", "5055"],
+      "port": 5055
+    }
+  ]
+}

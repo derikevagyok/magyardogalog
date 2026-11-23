@@ -1,0 +1,33 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Egy dokumentum = egy magyaróra. Azonosító: "2026-11-23_6" (dátum_óra).
+    match /orak/{oraId} {
+      allow read: if true;
+
+      allow create, update: if request.auth != null
+        && oraId.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]')
+        && validOra(request.resource.data, oraId);
+
+      allow delete: if request.auth != null;
+    }
+
+    // Minden más tiltva.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function validOra(d, oraId) {
+      return d.keys().hasOnly(['date', 'period', 'subject', 'status', 'topic', 'updatedAt'])
+        && d.keys().hasAll(['date', 'period', 'subject', 'status', 'topic', 'updatedAt'])
+        && d.date is string && oraId == d.date + '_' + string(d.period)
+        && d.period is int && d.period >= 0 && d.period <= 9
+        && d.subject in ['Irodalom', 'Magyar nyelv']
+        && d.status in ['igen', 'nem', 'elmaradt']
+        && d.topic is string && d.topic.size() <= 120
+        && d.updatedAt is string && d.updatedAt.size() <= 40;
+    }
+  }
+}
