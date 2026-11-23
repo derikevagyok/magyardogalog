@@ -24,7 +24,7 @@ service cloud.firestore {
         && d.keys().hasAll(['date', 'period', 'subject', 'status', 'topic', 'updatedAt'])
         && d.date is string && oraId == d.date + '_' + string(d.period)
         && d.period is int && d.period >= 0 && d.period <= 9
-        && d.subject in ['Irodalom', 'Magyar nyelv']
+        && d.subject in ['Irodalom', 'Magyar nyelv', 'Állampolgári ismeretek']
         && d.status in ['igen', 'nem', 'elmaradt']
         && d.topic is string && d.topic.size() <= 120
         && d.updatedAt is string && d.updatedAt.size() <= 40;

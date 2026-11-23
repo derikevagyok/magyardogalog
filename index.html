@@ -244,6 +244,7 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gsta
 const SCHEDULE = {
   1:[{p:6,s:"Irodalom"}],
   2:[{p:5,s:"Irodalom"}],
+  3:[{p:4,s:"Állampolgári ismeretek"}],
   4:[{p:2,s:"Irodalom"}],
   5:[{p:2,s:"Irodalom"},{p:6,s:"Magyar nyelv"}]
 };
@@ -269,7 +270,10 @@ const today = () => ymd(new Date());
 const fmtDate = s => { const d = parse(s); return `${MONTHS[d.getMonth()]} ${d.getDate()}., ${DAYS[d.getDay()]}`; };
 const fmtShort = s => { const d = parse(s); return `${MONTHS[d.getMonth()].slice(0,3)}. ${d.getDate()}.`; };
 
+// Tanítási szünetek (2026/2027-es tanév rendje), első és utolsó nap is szünet
+const BREAKS = [["2026-10-23","2026-11-01"],["2026-12-19","2027-01-03"],["2027-03-23","2027-04-04"]];
 function lessonsOn(ds){
+  if (BREAKS.some(([a,b]) => ds >= a && ds <= b)) return [];
   const wd = parse(ds).getDay();
   return (SCHEDULE[wd]||[]).map(l => ({id:`${ds}_${l.p}`, date:ds, period:l.p, subject:l.s}));
 }
