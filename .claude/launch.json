@@ -4,7 +4,7 @@
     {
       "name": "magyardogalog",
       "runtimeExecutable": "powershell",
-      "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "C:\\Users\\user\\AppData\\Local\\Temp\\claude\\712fadf104e2453e\\e37cb186-6c42-4da6-b800-5de7ca53fc4e\\scratchpad\\serve.ps1", "-Root", "C:\\Users\\user\\Desktop\\progi\\magyardogalog", "-Port", "5055"],
+      "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "C:\\Users\\szabo\\AppData\\Local\\Temp\\claude\\6ceefd80eac686cf\\5a537e29-572b-4b99-be6b-f2284857e028\\scratchpad\\serve.ps1", "-Root", "C:\\Users\\szabo\\Desktop\\weboldal\\magyardogalog", "-Port", "5055"],
       "port": 5055
     }
   ]

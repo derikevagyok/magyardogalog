@@ -7,11 +7,15 @@
 <meta name="theme-color" content="#161d29" media="(prefers-color-scheme: dark)">
 <title>Magyar dogalog</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232f5bd3'/%3E%3Cpath d='M9 17l5 5 9-12' stroke='%23d3342a' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script>
+// Téma: a mentett választás (világos/sötét) már betöltés előtt érvényesül, hogy ne villanjon.
+try { var t = localStorage.getItem("dogalog-theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&family=Caveat:wght@700&display=swap">
 <style>
-/* Layout: egy hasábos, kockás füzetlap; fent a mai kérdés, alatta a statisztika; piros toll csak a dogáknak. */
+/* Layout: egy hasábos, kockás füzetlap; három fül: Áttekintés (mai kérdés + gyors számok + idővonal), Statisztika, Előzmények. Piros toll csak a dogáknak. */
 :root{
   --paper:#f8fafd;
   --grid:rgba(47,91,211,.07);
@@ -26,6 +30,7 @@
   --red-soft:rgba(211,52,42,.10);
   --green:#1d8757;
   --green-soft:rgba(29,135,87,.11);
+  --green-cell:#9fd1b8;
   --gray:#7d879a;
   --gray-soft:rgba(125,135,154,.14);
   --shadow:0 1px 2px rgba(27,39,64,.06),0 4px 14px rgba(27,39,64,.05);
@@ -35,11 +40,11 @@
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --paper:#0f141d;--grid:rgba(124,156,255,.05);--card:#161d29;--ink:#e5eaf4;--muted:#97a2b7;--line:#273143;--track:#2b3548;
-  --accent:#86a2ff;--accent-soft:rgba(134,162,255,.13);--red:#ff6a5c;--red-soft:rgba(255,106,92,.14);--green:#45c48b;--green-soft:rgba(69,196,139,.14);
+  --accent:#86a2ff;--accent-soft:rgba(134,162,255,.13);--red:#ff6a5c;--red-soft:rgba(255,106,92,.14);--green:#45c48b;--green-soft:rgba(69,196,139,.14);--green-cell:#2c6b50;
   --gray:#76819a;--gray-soft:rgba(118,129,154,.18);--shadow:0 1px 2px rgba(0,0,0,.3);color-scheme:dark}}
 :root[data-theme="dark"]{
   --paper:#0f141d;--grid:rgba(124,156,255,.05);--card:#161d29;--ink:#e5eaf4;--muted:#97a2b7;--line:#273143;--track:#2b3548;
-  --accent:#86a2ff;--accent-soft:rgba(134,162,255,.13);--red:#ff6a5c;--red-soft:rgba(255,106,92,.14);--green:#45c48b;--green-soft:rgba(69,196,139,.14);
+  --accent:#86a2ff;--accent-soft:rgba(134,162,255,.13);--red:#ff6a5c;--red-soft:rgba(255,106,92,.14);--green:#45c48b;--green-soft:rgba(69,196,139,.14);--green-cell:#2c6b50;
   --gray:#76819a;--gray-soft:rgba(118,129,154,.18);--shadow:0 1px 2px rgba(0,0,0,.3);color-scheme:dark}
 
 *{box-sizing:border-box}
@@ -60,23 +65,27 @@ button{cursor:pointer}
 button:disabled{cursor:not-allowed;opacity:.5}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-/* Header */
+/* Fejléc */
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
-.top-in{max-width:720px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+.top-in{max-width:760px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px 12px;flex-wrap:wrap;
   padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .brand{display:flex;align-items:baseline;gap:8px;min-width:0}
 .brand h1{margin:0;font-family:var(--f-display);font-weight:800;font-size:1.25rem;letter-spacing:-.01em}
 .brand .cls{font-size:.75rem;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.top-r{display:flex;align-items:center;gap:8px}
 .tabs{display:flex;background:var(--track);border-radius:10px;padding:3px;gap:2px}
-.tab{border:0;background:transparent;padding:6px 14px;border-radius:8px;font-weight:600;font-size:.9rem;color:var(--muted)}
+.tab{border:0;background:transparent;padding:6px 12px;border-radius:8px;font-weight:600;font-size:.9rem;color:var(--muted)}
 .tab[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+.theme-btn{width:38px;height:38px;flex:none;display:grid;place-items:center;border:1.5px solid var(--line);background:var(--card);border-radius:10px;color:var(--ink)}
+.theme-btn:hover{border-color:var(--muted)}
+.theme-btn svg{width:18px;height:18px}
 
-main{max-width:720px;margin:0 auto;padding-block:20px 48px;
+main{max-width:760px;margin:0 auto;padding-block:20px 48px;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   display:grid;gap:28px}
 .view{display:grid;gap:28px;min-width:0}
 .sec{display:grid;gap:12px;min-width:0}
-.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .sec-h h2{margin:0;font-family:var(--f-display);font-weight:600;font-size:.8rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
 .sec-h .hint{font-size:.82rem;color:var(--muted)}
 
@@ -113,13 +122,34 @@ main{max-width:720px;margin:0 auto;padding-block:20px 48px;
 .p-igen{background:var(--red-soft);color:var(--red)}
 .p-nem{background:var(--green-soft);color:var(--green)}
 .p-elmaradt{background:var(--gray-soft);color:var(--gray)}
-.p-nincs{background:var(--accent-soft);color:var(--accent)}
 
 .free{background:var(--card);border:1px dashed var(--line);border-radius:14px;padding:16px;color:var(--muted)}
 .free strong{color:var(--ink);font-weight:600}
 
-/* Statisztika */
-.stat-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);display:grid;gap:18px}
+/* Kártyák, számok */
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);display:grid;gap:16px;min-width:0}
+.card h3{margin:0;font-family:var(--f-display);font-weight:600;font-size:1.05rem;letter-spacing:-.005em}
+.card .sub{margin:-12px 0 0;font-size:.85rem;color:var(--muted)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0;box-shadow:var(--shadow)}
+.kpi .k{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+.kpi .v{font-family:var(--f-display);font-weight:800;font-size:1.6rem;line-height:1.15;font-variant-numeric:tabular-nums}
+.kpi .v.red{color:var(--red)}
+.kpi .s{font-size:.8rem;color:var(--muted);overflow-wrap:anywhere;line-height:1.35}
+
+/* Következő óra */
+.next{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center}
+.next .when{font-size:.82rem;color:var(--muted)}
+.next .subj{font-family:var(--f-display);font-weight:800;font-size:1.25rem;line-height:1.2}
+.next .why{font-size:.85rem;color:var(--muted);margin-top:4px}
+.risk{text-align:center;min-width:96px}
+.risk b{display:block;font-family:var(--f-hand);font-size:2.6rem;line-height:.9;color:var(--red)}
+.risk span{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.meter{grid-column:1/-1;display:grid;gap:5px}
+.meter .track{height:10px}
+.meter .scale{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted)}
+
+/* Donut */
 .donut-wrap{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center}
 .donut{width:150px;height:150px;position:relative;flex:none}
 .donut svg{width:100%;height:100%;display:block}
@@ -132,11 +162,11 @@ main{max-width:720px;margin:0 auto;padding-block:20px 48px;
 .legend li{display:flex;align-items:center;gap:8px;font-size:.9rem}
 .legend i{width:10px;height:10px;border-radius:3px;flex:none}
 .legend .n{margin-left:auto;font-weight:600;font-variant-numeric:tabular-nums}
-.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.tile{border-top:1px solid var(--line);padding-top:10px;min-width:0}
-.tile .k{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
-.tile .v{font-family:var(--f-display);font-weight:800;font-size:1.35rem;line-height:1.2;font-variant-numeric:tabular-nums}
-.tile .s{font-size:.8rem;color:var(--muted);overflow-wrap:anywhere}
+.legend-row{display:flex;flex-wrap:wrap;gap:6px 16px;margin:0;padding:0;list-style:none;font-size:.82rem;color:var(--muted)}
+.legend-row li{display:flex;align-items:center;gap:6px}
+.legend-row i{width:12px;height:12px;border-radius:3px;flex:none}
+
+/* Vízszintes sávok */
 .bars{display:grid;gap:12px}
 .bar-row{display:grid;gap:5px}
 .bar-top{display:flex;justify-content:space-between;gap:8px;font-size:.88rem}
@@ -146,6 +176,46 @@ main{max-width:720px;margin:0 auto;padding-block:20px 48px;
 .bar-top .val b{color:var(--ink)}
 .track{height:8px;background:var(--track);border-radius:99px;overflow:hidden}
 .fill{height:100%;background:var(--red);border-radius:99px;transition:width .4s ease}
+.bar-row.top .lbl b::after{content:"legtöbb";margin-left:6px;font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--red);background:var(--red-soft);padding:1px 6px;border-radius:99px;vertical-align:1px}
+
+/* Hónapok oszlopdiagram */
+.cols{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:10px;align-items:end;height:170px;padding-top:18px;border-bottom:1px solid var(--line)}
+.col{height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;min-width:0;cursor:default}
+.col .n{font-size:.82rem;font-weight:600;font-variant-numeric:tabular-nums}
+.col .stack{width:min(44px,100%);display:flex;flex-direction:column;justify-content:flex-end;gap:2px}
+.col .seg{border-radius:0}
+.col .seg:nth-child(2){border-radius:4px 4px 0 0}
+.col .seg.y{background:var(--red)}
+.col .seg.nn{background:var(--green-cell)}
+.col-labels{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:10px;font-size:.78rem;color:var(--muted);text-align:center;margin-top:-10px}
+
+/* Idővonal (heti rács) */
+.cal{display:grid;gap:4px;overflow-x:auto}
+.cal-row{display:grid;grid-template-columns:62px repeat(var(--n),minmax(30px,1fr));gap:4px;align-items:center}
+.cal-row .wk{font-size:.75rem;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cal-head span{font-size:.72rem;color:var(--muted);text-align:center;font-weight:600;line-height:1.15}
+.cal-head span small{display:block;font-weight:400;font-size:.66rem}
+.cell{height:26px;border-radius:6px;border:0;padding:0;display:block;width:100%}
+.cell.igen{background:var(--red)}
+.cell.nem{background:var(--green-cell)}
+.cell.elmaradt{background:var(--gray-soft);box-shadow:inset 0 0 0 1px var(--gray)}
+.cell.nincs{background:transparent;box-shadow:inset 0 0 0 1.5px var(--accent);background-image:repeating-linear-gradient(45deg,var(--accent-soft) 0 4px,transparent 4px 8px)}
+.cell.szunet,.cell.jovo{background:transparent;box-shadow:inset 0 0 0 1px var(--track);cursor:default}
+.cell.szunet{background-image:repeating-linear-gradient(135deg,var(--track) 0 2px,transparent 2px 7px)}
+.cell.today{outline:2px solid var(--ink);outline-offset:1px}
+button.cell:hover{filter:brightness(1.08)}
+
+/* Érdekességek */
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fact{border-top:1px solid var(--line);padding-top:10px;min-width:0}
+.fact .k{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+.fact .v{font-family:var(--f-display);font-weight:800;font-size:1.3rem;line-height:1.2;font-variant-numeric:tabular-nums}
+.fact .s{font-size:.8rem;color:var(--muted);overflow-wrap:anywhere}
+.topics{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.topics li{display:grid;grid-template-columns:64px 1fr;gap:10px;font-size:.9rem;align-items:baseline}
+.topics .d{font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.topics q{quotes:none;font-family:var(--f-hand);color:var(--red);font-size:1.2rem;line-height:1.1}
+.topics small{color:var(--muted);display:block;font-size:.78rem}
 
 /* Előzmények */
 .chips{display:flex;gap:6px;flex-wrap:wrap}
@@ -157,6 +227,8 @@ main{max-width:720px;margin:0 auto;padding-block:20px 48px;
 .row{width:100%;text-align:left;display:grid;grid-template-columns:46px 1fr auto;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
 .row:hover{border-color:var(--muted)}
 .row[aria-expanded="true"]{border-color:var(--accent)}
+.row.flash{animation:flash 1.4s ease}
+@keyframes flash{0%,40%{box-shadow:0 0 0 3px var(--accent-soft);border-color:var(--accent)}}
 .dnum{text-align:center;line-height:1.1}
 .dnum b{display:block;font-family:var(--f-display);font-weight:800;font-size:1.3rem;font-variant-numeric:tabular-nums}
 .dnum span{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
@@ -172,20 +244,30 @@ main{max-width:720px;margin:0 auto;padding-block:20px 48px;
 .add input[type=date]{border:1.5px solid var(--line);background:var(--paper);border-radius:10px;padding:9px 12px;font-size:16px;max-width:100%}
 .add p{margin:0;color:var(--muted);font-size:.9rem}
 .empty{background:var(--card);border:1px dashed var(--line);border-radius:14px;padding:22px;text-align:center;color:var(--muted)}
+.linkish{border:0;background:none;padding:0;color:var(--accent);font-weight:600;font-size:.85rem}
 
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;
   background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:10px;font-weight:600;font-size:.9rem;transition:all .2s;pointer-events:none;z-index:20;max-width:calc(100% - 32px)}
 .toast.show{opacity:1;transform:translate(-50%,0)}
+.tip{position:fixed;z-index:30;pointer-events:none;background:var(--ink);color:var(--paper);font-size:.8rem;line-height:1.35;padding:7px 10px;border-radius:8px;max-width:240px;box-shadow:var(--shadow);opacity:0;transition:opacity .1s}
+.tip.show{opacity:1}
+.tip b{font-weight:600}
 
+@media (max-width:620px){
+  .kpis{grid-template-columns:1fr 1fr}
+}
 @media (max-width:520px){
   .donut-wrap{grid-template-columns:1fr;justify-items:center;text-align:center}
   .donut-wrap .legend{width:100%;max-width:280px;text-align:left}
-  .tiles{grid-template-columns:1fr 1fr}
-  .tiles .tile:last-child{grid-column:1/-1}
-  .tab{padding:6px 11px}
+  .top-r{width:100%;justify-content:space-between}
+  .tabs{flex:1}
+  .tab{flex:1;padding:6px 6px;font-size:.85rem}
   .choice{font-size:.85rem}
+  .facts{grid-template-columns:1fr 1fr}
+  .cal-row{grid-template-columns:50px repeat(var(--n),minmax(26px,1fr))}
+  .kpi .v{font-size:1.4rem}
 }
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
@@ -193,15 +275,20 @@ main{max-width:720px;margin:0 auto;padding-block:20px 48px;
 <header class="top">
   <div class="top-in">
     <div class="brand"><h1>Magyar dogalog</h1><span class="cls">12.c</span></div>
-    <div class="tabs" role="tablist">
-      <button class="tab" role="tab" id="tab-fo" data-view="fo" aria-selected="true">Áttekintés</button>
-      <button class="tab" role="tab" id="tab-elozmenyek" data-view="elozmenyek" aria-selected="false">Előzmények</button>
+    <div class="top-r">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" data-view="fo" aria-selected="true">Áttekintés</button>
+        <button class="tab" role="tab" data-view="statisztika" aria-selected="false">Statisztika</button>
+        <button class="tab" role="tab" data-view="elozmenyek" aria-selected="false">Előzmények</button>
+      </div>
+      <button class="theme-btn" id="theme-btn" type="button" aria-label="Sötét mód"></button>
     </div>
   </div>
 </header>
 
 <main>
   <div id="notes"></div>
+
   <div class="view" id="view-fo">
     <section class="sec" aria-labelledby="h-ma">
       <div class="sec-h"><h2 id="h-ma">Ma</h2><span class="hint" id="today-label"></span></div>
@@ -211,18 +298,31 @@ main{max-width:720px;margin:0 auto;padding-block:20px 48px;
       <div class="sec-h"><h2 id="h-pend">Kimaradt válaszok</h2><span class="hint" id="pending-count"></span></div>
       <div id="pending" class="list"></div>
     </section>
-    <section class="sec" aria-labelledby="h-stat">
-      <div class="sec-h"><h2 id="h-stat">Statisztika</h2><span class="hint" id="stat-hint"></span></div>
-      <div id="stats"></div>
+    <section class="sec" aria-labelledby="h-next">
+      <div class="sec-h"><h2 id="h-next">Következő magyaróra</h2></div>
+      <div id="next"></div>
+    </section>
+    <section class="sec" aria-labelledby="h-kpi">
+      <div class="sec-h"><h2 id="h-kpi">Röviden</h2><span class="hint" id="kpi-hint"></span></div>
+      <div id="kpis"></div>
+    </section>
+    <section class="sec" aria-labelledby="h-cal">
+      <div class="sec-h"><h2 id="h-cal">Idővonal</h2><span class="hint">Koppints egy órára a részletekért</span></div>
+      <div id="cal"></div>
     </section>
   </div>
+
+  <div class="view" id="view-statisztika" hidden>
+    <div id="stats"></div>
+  </div>
+
   <div class="view" id="view-elozmenyek" hidden>
     <section class="sec" aria-labelledby="h-hist">
       <div class="sec-h"><h2 id="h-hist">Előzmények</h2><span class="hint">Koppints egy órára a javításhoz</span></div>
       <div class="chips" id="chips"></div>
       <div id="history"></div>
     </section>
-    <section class="sec" aria-labelledby="h-add">
+    <section class="sec" id="add-sec" aria-labelledby="h-add">
       <div class="sec-h"><h2 id="h-add">Régebbi óra rögzítése</h2></div>
       <div class="add">
         <label for="pick-date">Melyik napon volt?</label>
@@ -233,6 +333,7 @@ main{max-width:720px;margin:0 auto;padding-block:20px 48px;
   </div>
 </main>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="tip" id="tip" aria-hidden="true"></div>
 
 <script type="module">
 import { firebaseConfig } from "./firebase-config.js";
@@ -248,6 +349,8 @@ const SCHEDULE = {
   4:[{p:2,s:"Irodalom"}],
   5:[{p:2,s:"Irodalom"},{p:6,s:"Magyar nyelv"}]
 };
+const SUBJECTS = ["Irodalom","Magyar nyelv","Állampolgári ismeretek"];
+const SHORT_SUBJ = {"Irodalom":"Irodalom","Magyar nyelv":"Nyelvtan","Állampolgári ismeretek":"Állampolg."};
 const SLOTS = [];
 Object.keys(SCHEDULE).forEach(wd=>SCHEDULE[wd].forEach(l=>SLOTS.push({wd:+wd,p:l.p,s:l.s})));
 const START = "2026-11-23"; // ettől kérdezi a kimaradt órákat
@@ -258,7 +361,7 @@ const LABEL = {igen:"Írtunk",nem:"Nem írtunk",elmaradt:"Nem volt óra"};
 
 let records = new Map();
 let db = null, dbState = "loading", canWrite = false, authState = "pending", gotData = false, slow = false;
-const ui = {view:"fo", filter:"mind", editing:null, confirmDel:null, drafts:{}, pickDate:""};
+const ui = {view:"fo", filter:"mind", editing:null, confirmDel:null, drafts:{}, pickDate:"", flash:null};
 const chains = {};
 
 const $ = id => document.getElementById(id);
@@ -267,13 +370,18 @@ const pad = n => String(n).padStart(2,"0");
 const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const parse = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y,m-1,d); };
 const today = () => ymd(new Date());
+const cap = s => s[0].toUpperCase() + s.slice(1);
 const fmtDate = s => { const d = parse(s); return `${MONTHS[d.getMonth()]} ${d.getDate()}., ${DAYS[d.getDay()]}`; };
 const fmtShort = s => { const d = parse(s); return `${MONTHS[d.getMonth()].slice(0,3)}. ${d.getDate()}.`; };
+const monday = s => { const d = parse(s); d.setDate(d.getDate() - (d.getDay()+6)%7); return ymd(d); };
+const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate()+n); return ymd(d); };
+const key = r => r.date + "_" + pad(r.period);
 
 // Tanítási szünetek (2026/2027-es tanév rendje), első és utolsó nap is szünet
-const BREAKS = [["2026-10-23","2026-11-01"],["2026-12-19","2027-01-03"],["2027-03-23","2027-04-04"]];
+const BREAKS = [["2000-01-01","2026-08-31"],["2026-10-23","2026-11-01"],["2026-12-19","2027-01-03"],["2027-03-23","2027-04-04"]];
+const isBreak = ds => BREAKS.some(([a,b]) => ds >= a && ds <= b);
 function lessonsOn(ds){
-  if (BREAKS.some(([a,b]) => ds >= a && ds <= b)) return [];
+  if (isBreak(ds)) return [];
   const wd = parse(ds).getDay();
   return (SCHEDULE[wd]||[]).map(l => ({id:`${ds}_${l.p}`, date:ds, period:l.p, subject:l.s}));
 }
@@ -284,7 +392,7 @@ function lessonsBetween(a, b){ // a <= nap < b
 }
 function nextLesson(){
   const d = parse(today());
-  for (let i=1;i<=14;i++){ d.setDate(d.getDate()+1); const ls = lessonsOn(ymd(d)); if (ls.length) return ls[0]; }
+  for (let i=1;i<=30;i++){ d.setDate(d.getDate()+1); const ls = lessonsOn(ymd(d)); if (ls.length) return ls[0]; }
   return null;
 }
 function lessonById(id){
@@ -294,6 +402,31 @@ function lessonById(id){
   const r = records.get(id);
   return r ? {id, date:r.date, period:r.period, subject:r.subject} : null;
 }
+
+/* ---------- téma ---------- */
+const MQ = window.matchMedia("(prefers-color-scheme: dark)");
+const SUN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/></svg>`;
+const MOON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg>`;
+function isDark(){
+  const t = document.documentElement.getAttribute("data-theme");
+  return t ? t === "dark" : MQ.matches;
+}
+function paintThemeBtn(){
+  const dark = isDark();
+  const b = $("theme-btn");
+  b.innerHTML = dark ? SUN : MOON;
+  b.setAttribute("aria-label", dark ? "Világos mód" : "Sötét mód");
+  b.title = dark ? "Váltás világos módra" : "Váltás sötét módra";
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.setAttribute("content", dark ? "#161d29" : "#ffffff"));
+}
+$("theme-btn").addEventListener("click", () => {
+  const next = isDark() ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  try { localStorage.setItem("dogalog-theme", next); } catch(e){}
+  paintThemeBtn();
+});
+MQ.addEventListener?.("change", paintThemeBtn);
+paintThemeBtn();
 
 /* ---------- mentés ---------- */
 let toastTimer;
@@ -333,6 +466,60 @@ function handleWriteError(e){
   else toast("Nem sikerült menteni. Próbáld újra.");
 }
 
+/* ---------- statisztika ---------- */
+function computeStats(){
+  const all = [...records.values()].filter(r => r.status);
+  const held = all.filter(r => r.status !== "elmaradt").sort((a,b) => key(a).localeCompare(key(b)));
+  const igen = held.filter(r => r.status === "igen");
+  const elm = all.filter(r => r.status === "elmaradt").length;
+  const n = held.length;
+
+  // sorozatok
+  let streak = 0; for (let i=n-1;i>=0;i--){ if (held[i].status === "igen") break; streak++; }
+  let longestDry = 0, run = 0, dryEnd = null;
+  held.forEach(r => { if (r.status === "igen") run = 0; else { run++; if (run > longestDry){ longestDry = run; dryEnd = r; } } });
+  let longestWet = 0; run = 0;
+  held.forEach(r => { run = r.status === "igen" ? run+1 : 0; longestWet = Math.max(longestWet, run); });
+  const idx = held.map((r,i) => r.status === "igen" ? i : -1).filter(i => i >= 0);
+  const gaps = idx.slice(1).map((v,i) => v - idx[i]);
+  const avgGap = gaps.length ? gaps.reduce((a,b)=>a+b,0) / gaps.length : null;
+
+  // tárgyanként
+  const bySubj = SUBJECTS.map(s => {
+    const rs = held.filter(r => r.subject === s); const y = rs.filter(r => r.status === "igen").length;
+    return {s, held: rs.length, yes: y, pct: rs.length ? Math.round(y/rs.length*100) : 0};
+  }).filter(x => x.held);
+
+  // hónaponként
+  const mMap = new Map();
+  held.forEach(r => { const k = r.date.slice(0,7); const o = mMap.get(k) || {k, held:0, yes:0}; o.held++; if (r.status === "igen") o.yes++; mMap.set(k, o); });
+  const byMonth = [...mMap.values()];
+
+  // hetente
+  const wMap = new Map();
+  held.forEach(r => { const k = monday(r.date); const o = wMap.get(k) || {k, held:0, yes:0}; o.held++; if (r.status === "igen") o.yes++; wMap.set(k, o); });
+  const weeks = [...wMap.values()];
+  const bestWeek = weeks.slice().sort((a,b) => b.yes - a.yes || b.k.localeCompare(a.k))[0];
+  const cleanWeeks = weeks.filter(w => w.yes === 0).length;
+  const perWeek = weeks.length ? igen.length / weeks.length : 0;
+
+  // órarendi helyenként
+  const slots = SLOTS.map(s => {
+    const rs = held.filter(r => parse(r.date).getDay() === s.wd && r.period === s.p);
+    const y = rs.filter(r => r.status === "igen").length;
+    return {...s, held: rs.length, yes: y, pct: rs.length ? Math.round(y / rs.length * 100) : 0};
+  });
+  // a hét napjai szerint
+  const byDay = [1,2,3,4,5].map(wd => {
+    const rs = held.filter(r => parse(r.date).getDay() === wd); const y = rs.filter(r => r.status === "igen").length;
+    return {wd, held: rs.length, yes: y, pct: rs.length ? Math.round(y/rs.length*100) : 0};
+  }).filter(x => x.held);
+
+  const last = igen[igen.length-1];
+  return {all, held, igen, nIgen: igen.length, nNem: n - igen.length, elm, n, pct: n ? Math.round(igen.length / n * 100) : null,
+    streak, longestDry, dryEnd, longestWet, avgGap, bySubj, byMonth, weeks, bestWeek, cleanWeeks, perWeek, slots, byDay, last};
+}
+
 /* ---------- komponensek ---------- */
 const pill = st => `<span class="pill p-${st}">${LABEL[st]}</span>`;
 
@@ -360,7 +547,7 @@ function askCard(l){
 function histRow(id, r){
   const d = parse(r.date); const open = ui.editing === id;
   const l = lessonById(id) || {id, date:r.date, period:r.period, subject:r.subject};
-  return `<button class="row" data-act="edit" data-id="${id}" aria-expanded="${open}">
+  return `<button class="row${ui.flash===id?" flash":""}" id="row-${id}" data-act="edit" data-id="${id}" aria-expanded="${open}">
       <span class="dnum"><b>${d.getDate()}</b><span>${DAYS_SHORT[d.getDay()]}</span></span>
       <span class="rmain"><span class="t">${esc(r.subject)} <span>· ${r.period}. óra</span></span>
         ${r.status === "igen" ? `<span class="tp">${r.topic ? `<q>${esc(r.topic)}</q>` : "Téma nincs megadva"}</span>` : ""}</span>
@@ -371,6 +558,14 @@ function histRow(id, r){
         <button class="btn-ghost" data-act="close">Bezárás</button>
         ${writable() ? `<button class="btn-danger${ui.confirmDel===id?" armed":""}" data-act="del" data-id="${id}">${ui.confirmDel===id ? "Biztos? Koppints újra" : "Bejegyzés törlése"}</button>` : ""}
       </div></div>` : ""}`;
+}
+
+function bar(label, sub, yes, held, pct, extra = ""){
+  return `<div class="bar-row${extra}" data-tip="<b>${esc(label)}</b><br>${yes} doga ${held} megtartott órából (${pct}%)">
+    <div class="bar-top"><span class="lbl"><b>${esc(label)}</b>${sub ? ` <span>· ${esc(sub)}</span>` : ""}</span>
+      <span class="val">${held ? `<b>${pct}%</b> · ${yes}/${held}` : "nincs adat"}</span></div>
+    <div class="track"><div class="fill" style="width:${pct}%"></div></div>
+  </div>`;
 }
 
 /* ---------- nézetek ---------- */
@@ -391,7 +586,7 @@ function renderToday(){
     $("today").innerHTML = `<div class="list">${ls.map(askCard).join("")}</div>`;
   } else {
     const nx = nextLesson();
-    $("today").innerHTML = `<div class="free"><strong>Ma nincs magyaróra.</strong>${nx ? ` A következő: ${fmtDate(nx.date)}, ${nx.period}. óra (${esc(nx.subject)}).` : ""}</div>`;
+    $("today").innerHTML = `<div class="free"><strong>${isBreak(t) ? "Szünet van, nincs magyaróra." : "Ma nincs magyaróra."}</strong>${nx ? ` A következő: ${fmtDate(nx.date)}, ${nx.period}. óra (${esc(nx.subject)}).` : ""}</div>`;
   }
   const from = START < firstRecordDate() ? START : firstRecordDate();
   const missing = lessonsBetween(from, t).filter(l => !records.has(l.id)).reverse();
@@ -403,85 +598,188 @@ function firstRecordDate(){
   let m = START; records.forEach(r => { if (r.date && r.date < m) m = r.date; }); return m;
 }
 
-function computeStats(){
-  const all = [...records.values()].filter(r => r.status);
-  const igen = all.filter(r => r.status === "igen");
-  const nem = all.filter(r => r.status === "nem");
-  const elm = all.filter(r => r.status === "elmaradt");
-  const held = igen.length + nem.length;
-  const heldSorted = all.filter(r => r.status !== "elmaradt").sort((a,b) => (b.date+b.period).localeCompare(a.date+a.period));
-  let streak = 0; for (const r of heldSorted){ if (r.status === "igen") break; streak++; }
-  const last = heldSorted.find(r => r.status === "igen");
-  const slots = SLOTS.map(s => {
-    const rs = all.filter(r => r.status !== "elmaradt" && parse(r.date).getDay() === s.wd && r.period === s.p);
-    const y = rs.filter(r => r.status === "igen").length;
-    return {...s, held: rs.length, yes: y, pct: rs.length ? Math.round(y / rs.length * 100) : 0};
-  });
-  return {igen:igen.length, nem:nem.length, elm:elm.length, held, pct: held ? Math.round(igen.length / held * 100) : null, streak, last, slots};
+function loadingCard(){ return `<div class="card"><p class="lead" style="margin:0;color:var(--muted)">Adatok betöltése…</p></div>`; }
+const loading = () => !gotData && (dbState === "loading" || dbState === "ok");
+
+function renderNext(s){
+  if (loading()){ $("next").innerHTML = loadingCard(); return; }
+  const t = today();
+  const todayOpen = lessonsOn(t).find(l => !records.has(l.id));
+  const nl = todayOpen || nextLesson();
+  if (!nl){ $("next").innerHTML = `<div class="free">A következő hónapban nincs magyaróra az órarend szerint.</div>`; return; }
+  const slot = s.slots.find(x => x.wd === parse(nl.date).getDay() && x.p === nl.period);
+  let pct, why;
+  if (slot && slot.held >= 3){
+    pct = slot.pct;
+    why = `Eddig a ${DAYS[slot.wd]} ${slot.p}. órák közül ${slot.held}-ból ${slot.yes} alkalommal írtatok.`;
+  } else if (s.n){
+    pct = s.pct;
+    why = `Erről az óráról még kevés az adat, ezért az összes magyaróra aránya alapján (${s.nIgen}/${s.n}).`;
+  } else { pct = null; why = "Még nincs elég adat a becsléshez."; }
+  if (s.n && s.streak >= 6) why += ` Már ${s.streak} órája nem volt doga.`;
+  const lvl = pct == null ? "" : pct >= 35 ? "Nagy esély" : pct >= 15 ? "Közepes esély" : "Kis esély";
+  $("next").innerHTML = `<div class="card next">
+    <div>
+      <div class="when">${nl.date === t ? "Ma" : cap(fmtDate(nl.date))} · ${nl.period}. óra</div>
+      <div class="subj">${esc(nl.subject)}</div>
+      <div class="why">${why}</div>
+    </div>
+    <div class="risk"><b>${pct == null ? "–" : pct + "%"}</b><span>${lvl || "esély dogára"}</span></div>
+    ${pct == null ? "" : `<div class="meter" role="img" aria-label="Dogaesély ${pct} százalék">
+      <div class="track"><div class="fill" style="width:${Math.max(pct,2)}%"></div></div>
+      <div class="scale"><span>nyugi</span><span>tanulj</span></div></div>`}
+  </div>`;
 }
 
-function renderStats(){
-  if (!gotData && (dbState === "loading" || dbState === "ok")){
-    $("stats").innerHTML = `<div class="stat-card"><p class="lead" style="margin:0;color:var(--muted)">Adatok betöltése…</p></div>`;
-    $("stat-hint").textContent = ""; return;
-  }
-  const s = computeStats();
-  $("stat-hint").textContent = s.held ? `${s.held} megtartott óra alapján` : "";
-  const R = 56, C = 2 * Math.PI * R;
-  const frac = s.held ? s.igen / s.held : 0;
-  const arc = s.held ? `<circle cx="70" cy="70" r="${R}" fill="none" stroke="var(--red)" stroke-width="16" stroke-linecap="${frac>0 && frac<1 ? "round" : "butt"}"
-      stroke-dasharray="${(C*frac).toFixed(2)} ${C.toFixed(2)}" transform="rotate(-90 70 70)"/>` : "";
-  const greenArc = s.held && frac < 1 ? `<circle cx="70" cy="70" r="${R}" fill="none" stroke="var(--green)" stroke-opacity=".35" stroke-width="16" />` : "";
-  let lead;
-  if (!s.held) lead = "Még nincs adat. Ha megválaszoljátok a fenti kérdést, itt látszik majd, hány százalékban írtok dogát magyarórán.";
-  else {
-    const every = Math.round(100 / s.pct);
-    lead = `A megtartott magyarórák ${s.pct}%-án írtatok dogát, vagyis ${every <= 1 ? "szinte minden órán" : `nagyjából minden ${every}. órán`}.`;
-  }
-  if (s.held && s.pct === 0) lead = "Eddig egyetlen megtartott magyarórán sem írtatok dogát.";
-  if (s.held && s.pct === 100) lead = "Eddig minden megtartott magyarórán írtatok dogát.";
-  const maxSlot = s.slots.filter(x => x.held).sort((a,b) => b.pct - a.pct)[0];
+function renderKpis(s){
+  if (loading()){ $("kpis").innerHTML = ""; $("kpi-hint").textContent = ""; return; }
+  $("kpi-hint").textContent = s.n ? `${s.n} megtartott óra alapján` : "";
+  const every = s.pct ? Math.round(100 / s.pct) : null;
+  $("kpis").innerHTML = `<div class="kpis">
+    <div class="kpi"><div class="k">Dogás órák</div><div class="v red">${s.n ? s.pct + "%" : "–"}</div><div class="s">${every ? (every <= 1 ? "szinte minden órán" : `kb. minden ${every}. órán`) : "még nincs adat"}</div></div>
+    <div class="kpi"><div class="k">Összes doga</div><div class="v">${s.nIgen}</div><div class="s">${s.n ? `${s.n} órából` : "még nincs"}</div></div>
+    <div class="kpi"><div class="k">Doga nélkül</div><div class="v">${s.streak} óra</div><div class="s">${s.last ? "a legutóbbi doga óta" : "zsinórban"}</div></div>
+    <div class="kpi"><div class="k">Legutóbbi doga</div><div class="v">${s.last ? fmtShort(s.last.date) : "–"}</div><div class="s">${s.last ? (s.last.topic ? esc(s.last.topic) : esc(s.last.subject)) : "még nem volt"}</div></div>
+  </div>`;
+}
 
-  $("stats").innerHTML = `<div class="stat-card">
+function renderCal(){
+  if (loading()){ $("cal").innerHTML = loadingCard(); return; }
+  const t = today();
+  const first = monday(firstRecordDate() < START ? firstRecordDate() : START);
+  const last = monday(t);
+  const cols = SLOTS;
+  let html = `<div class="cal-row cal-head" style="--n:${cols.length}"><span></span>${cols.map(c => `<span>${DAYS_SHORT[c.wd]} ${c.p}.<small>${SHORT_SUBJ[c.s]}</small></span>`).join("")}</div>`;
+  const rows = [];
+  for (let w = first; w <= last; w = addDays(w, 7)){
+    const cells = cols.map(c => {
+      const ds = addDays(w, c.wd - 1); const id = `${ds}_${c.p}`; const r = records.get(id);
+      const head = `<b>${cap(fmtDate(ds))}, ${c.p}. óra</b><br>${esc(c.s)}`;
+      const isT = ds === t ? " today" : "";
+      if (r && r.status){
+        const tip = `${head}<br>${LABEL[r.status]}${r.status === "igen" && r.topic ? `: ${esc(r.topic)}` : ""}`;
+        return `<button class="cell ${r.status}${isT}" data-act="jump" data-id="${id}" data-tip="${esc(tip)}" aria-label="${esc(fmtDate(ds))} ${c.p}. óra: ${LABEL[r.status]}"></button>`;
+      }
+      if (isBreak(ds)) return `<span class="cell szunet" data-tip="${esc(head + "<br>Tanítási szünet")}"></span>`;
+      if (ds > t) return `<span class="cell jovo${isT}"></span>`;
+      return `<button class="cell nincs${isT}" data-act="jump" data-id="${id}" data-tip="${esc(head + "<br>Még nincs megválaszolva")}" aria-label="${esc(fmtDate(ds))} ${c.p}. óra: nincs megválaszolva"></button>`;
+    }).join("");
+    const wd = parse(w);
+    rows.push(`<div class="cal-row" style="--n:${cols.length}"><span class="wk">${MONTHS[wd.getMonth()].slice(0,3)}. ${wd.getDate()}.</span>${cells}</div>`);
+  }
+  html += rows.reverse().join("");
+  $("cal").innerHTML = `<div class="card">
+    <div class="cal">${html}</div>
+    <ul class="legend-row">
+      <li><i style="background:var(--red)"></i>Írtunk</li>
+      <li><i style="background:var(--green-cell)"></i>Nem írtunk</li>
+      <li><i style="background:var(--gray-soft);box-shadow:inset 0 0 0 1px var(--gray)"></i>Nem volt óra</li>
+      <li><i style="box-shadow:inset 0 0 0 1.5px var(--accent)"></i>Nincs válasz</li>
+      <li><i style="box-shadow:inset 0 0 0 1px var(--track);background-image:repeating-linear-gradient(135deg,var(--track) 0 2px,transparent 2px 5px)"></i>Szünet</li>
+    </ul>
+  </div>`;
+}
+
+function renderStats(s){
+  if (loading()){ $("stats").innerHTML = loadingCard(); return; }
+  if (!s.n){
+    $("stats").innerHTML = `<div class="empty">Még nincs adat. Ha megválaszoljátok az Áttekintés fülön a kérdést, itt jelennek meg a számok.</div>`;
+    return;
+  }
+  const R = 56, C = 2 * Math.PI * R;
+  const frac = s.nIgen / s.n;
+  const every = Math.round(100 / Math.max(s.pct,1));
+  let lead = `A megtartott magyarórák ${s.pct}%-án írtatok dogát, vagyis ${every <= 1 ? "szinte minden órán" : `nagyjából minden ${every}. órán`}.`;
+  if (s.pct === 0) lead = "Eddig egyetlen megtartott magyarórán sem írtatok dogát.";
+  if (s.pct === 100) lead = "Eddig minden megtartott magyarórán írtatok dogát.";
+
+  // hónapok oszlopdiagram
+  const maxHeld = Math.max(...s.byMonth.map(m => m.held));
+  const monthName = k => MONTHS[+k.slice(5,7)-1];
+  const cols = s.byMonth.map(m => {
+    const hY = m.yes / maxHeld * 100, hN = (m.held - m.yes) / maxHeld * 100;
+    return `<div class="col" data-tip="<b>${cap(monthName(m.k))}</b><br>${m.yes} doga ${m.held} megtartott órából (${Math.round(m.yes/m.held*100)}%)">
+      <span class="n">${m.yes}</span>
+      <div class="stack" style="height:calc(100% - 22px)">
+        <div style="flex:1"></div>
+        ${m.held - m.yes ? `<div class="seg nn" style="height:${hN}%"></div>` : ""}
+        ${m.yes ? `<div class="seg y" style="height:${hY}%"></div>` : ""}
+      </div></div>`;
+  }).join("");
+  const colLabels = s.byMonth.map(m => `<span>${monthName(m.k).slice(0,3)}.</span>`).join("");
+
+  const topSlot = s.slots.filter(x => x.held).sort((a,b) => b.pct - a.pct)[0];
+  const topDay = s.byDay.slice().sort((a,b) => b.pct - a.pct)[0];
+  const calm = s.slots.filter(x => x.held >= 3).sort((a,b) => a.pct - b.pct)[0];
+
+  const topics = s.igen.slice().reverse();
+
+  $("stats").innerHTML = `
+  <section class="sec"><div class="sec-h"><h2>Összesítés</h2><span class="hint">${s.n} megtartott óra alapján</span></div>
+  <div class="card">
     <div class="donut-wrap">
-      <div class="donut" role="img" aria-label="${s.held ? `A megtartott órák ${s.pct} százalékán írtatok dogát` : "Még nincs adat"}">
-        <svg viewBox="0 0 140 140"><circle cx="70" cy="70" r="${R}" fill="none" stroke="var(--track)" stroke-width="16"/>${greenArc}${arc}</svg>
-        <div class="donut-c${s.held ? "" : " empty"}"><b>${s.held ? s.pct + "%" : "–"}</b><small>dogás óra</small></div>
+      <div class="donut" role="img" aria-label="A megtartott órák ${s.pct} százalékán írtatok dogát">
+        <svg viewBox="0 0 140 140"><circle cx="70" cy="70" r="${R}" fill="none" stroke="var(--green-cell)" stroke-width="16"/>
+          <circle cx="70" cy="70" r="${R}" fill="none" stroke="var(--red)" stroke-width="16" stroke-dasharray="${(C*frac).toFixed(2)} ${C.toFixed(2)}" transform="rotate(-90 70 70)"/></svg>
+        <div class="donut-c"><b>${s.pct}%</b><small>dogás óra</small></div>
       </div>
       <div style="min-width:0">
         <p class="lead">${lead}</p>
         <ul class="legend">
-          <li><i style="background:var(--red)"></i>Írtunk<span class="n">${s.igen}</span></li>
-          <li><i style="background:var(--green);opacity:.55"></i>Nem írtunk<span class="n">${s.nem}</span></li>
+          <li><i style="background:var(--red)"></i>Írtunk<span class="n">${s.nIgen}</span></li>
+          <li><i style="background:var(--green-cell)"></i>Nem írtunk<span class="n">${s.nNem}</span></li>
           <li><i style="background:var(--gray-soft);border:1px solid var(--gray)"></i>Nem volt óra<span class="n">${s.elm}</span></li>
         </ul>
       </div>
     </div>
-    <div class="tiles">
-      <div class="tile"><div class="k">Összes doga</div><div class="v">${s.igen}</div><div class="s">${s.held ? `${s.held} órából` : "még nincs"}</div></div>
-      <div class="tile"><div class="k">Doga nélkül</div><div class="v">${s.streak} óra</div><div class="s">${s.held ? "a legutóbbi doga óta" : "zsinórban"}</div></div>
-      <div class="tile"><div class="k">Legutóbbi doga</div><div class="v">${s.last ? fmtShort(s.last.date) : "–"}</div><div class="s">${s.last ? (s.last.topic ? esc(s.last.topic) : esc(s.last.subject)) : "még nem volt"}</div></div>
-    </div>
-    <div class="bars">
-      ${s.slots.map(x => `<div class="bar-row">
-        <div class="bar-top"><span class="lbl"><b>${DAYS[x.wd][0].toUpperCase() + DAYS[x.wd].slice(1)}, ${x.p}. óra</b> <span>· ${x.s}</span></span>
-          <span class="val">${x.held ? `<b>${x.pct}%</b> · ${x.yes}/${x.held}` : "nincs adat"}</span></div>
-        <div class="track"><div class="fill" style="width:${x.pct}%"></div></div>
-      </div>`).join("")}
-    </div>
-    ${maxSlot && maxSlot.pct > 0 ? `<p style="margin:0;font-size:.88rem;color:var(--muted)">A legveszélyesebb óra: <b style="color:var(--ink)">${DAYS[maxSlot.wd]} ${maxSlot.p}. óra</b> (${maxSlot.pct}%).</p>` : ""}
-  </div>`;
+  </div></section>
+
+  <section class="sec"><div class="sec-h"><h2>Érdekességek</h2></div>
+  <div class="card"><div class="facts">
+    <div class="fact"><div class="k">Két doga között</div><div class="v">${s.avgGap ? s.avgGap.toFixed(1).replace(".", ",") + " óra" : "–"}</div><div class="s">átlagosan telik el</div></div>
+    <div class="fact"><div class="k">Leghosszabb nyugi</div><div class="v">${s.longestDry} óra</div><div class="s">${s.dryEnd ? `doga nélkül, ${fmtShort(s.dryEnd.date)}-ig` : "doga nélkül"}</div></div>
+    <div class="fact"><div class="k">Dogák hetente</div><div class="v">${s.perWeek.toFixed(1).replace(".", ",")}</div><div class="s">átlag ${s.weeks.length} tanítási hét alatt</div></div>
+    <div class="fact"><div class="k">Legdogásabb hét</div><div class="v">${s.bestWeek && s.bestWeek.yes ? s.bestWeek.yes + " doga" : "–"}</div><div class="s">${s.bestWeek && s.bestWeek.yes ? `${fmtShort(s.bestWeek.k)} hetében` : ""}</div></div>
+    <div class="fact"><div class="k">Dogamentes hetek</div><div class="v">${s.cleanWeeks} / ${s.weeks.length}</div><div class="s">hét telt el doga nélkül</div></div>
+    <div class="fact"><div class="k">Legnyugisabb óra</div><div class="v">${calm ? `${DAYS_SHORT[calm.wd]} ${calm.p}.` : "–"}</div><div class="s">${calm ? `${esc(calm.s)}, ${calm.pct}%` : "még kevés az adat"}</div></div>
+  </div></div></section>
+
+  <section class="sec"><div class="sec-h"><h2>Hónaponként</h2><span class="hint">piros: doga · zöld: doga nélküli óra</span></div>
+  <div class="card">
+    <div class="cols" role="img" aria-label="Dogák száma hónaponként">${cols}</div>
+    <div class="col-labels">${colLabels}</div>
+  </div></section>
+
+  <section class="sec"><div class="sec-h"><h2>Tárgyanként</h2></div>
+  <div class="card"><div class="bars">
+    ${s.bySubj.map(x => bar(x.s, "", x.yes, x.held, x.pct)).join("")}
+  </div></div></section>
+
+  <section class="sec"><div class="sec-h"><h2>Órarend szerint</h2>${topSlot && topSlot.pct ? `<span class="hint">A legveszélyesebb: ${DAYS[topSlot.wd]} ${topSlot.p}. óra</span>` : ""}</div>
+  <div class="card"><div class="bars">
+    ${s.slots.map(x => bar(`${cap(DAYS[x.wd])}, ${x.p}. óra`, x.s, x.yes, x.held, x.pct, topSlot && topSlot.pct && x === topSlot ? " top" : "")).join("")}
+  </div></div></section>
+
+  <section class="sec"><div class="sec-h"><h2>A hét napjai</h2>${topDay && topDay.pct ? `<span class="hint">A legrizikósabb nap: ${DAYS[topDay.wd]}</span>` : ""}</div>
+  <div class="card"><div class="bars">
+    ${s.byDay.map(x => bar(cap(DAYS[x.wd]), "", x.yes, x.held, x.pct)).join("")}
+  </div></div></section>
+
+  <section class="sec"><div class="sec-h"><h2>Miből írtunk</h2><span class="hint">${s.nIgen} doga</span></div>
+  <div class="card"><ul class="topics">
+    ${topics.map(r => `<li><span class="d">${fmtShort(r.date)}</span><span>${r.topic ? `<q>${esc(r.topic)}</q>` : `<span style="color:var(--muted)">Téma nincs megadva</span>`}<small>${esc(r.subject)} · ${DAYS[parse(r.date).getDay()]} ${r.period}. óra</small></span></li>`).join("")}
+  </ul></div></section>`;
 }
 
 function renderHistory(){
   const all = [...records.entries()].filter(([,r]) => r.status)
-    .sort((a,b) => (b[1].date + pad(b[1].period)).localeCompare(a[1].date + pad(a[1].period)));
+    .sort((a,b) => key(b[1]).localeCompare(key(a[1])));
   const cnt = {mind: all.length, igen:0, nem:0, elmaradt:0};
   all.forEach(([,r]) => cnt[r.status]++);
   const chipsDef = [["mind","Mind"],["igen","Írtunk"],["nem","Nem írtunk"],["elmaradt","Nem volt óra"]];
   $("chips").innerHTML = chipsDef.map(([k,t]) => `<button class="chip" data-act="filter" data-v="${k}" aria-pressed="${ui.filter===k}">${t}<span class="c">${cnt[k]}</span></button>`).join("");
   const rows = all.filter(([,r]) => ui.filter === "mind" || r.status === ui.filter);
-  if (!gotData && (dbState === "loading" || dbState === "ok")){ $("history").innerHTML = `<div class="empty">Betöltés…</div>`; return; }
+  if (loading()){ $("history").innerHTML = `<div class="empty">Betöltés…</div>`; return; }
   if (!rows.length){
     $("history").innerHTML = `<div class="empty">${all.length ? "Ebben a szűrőben nincs óra." : "Még nincs bejegyzés. Az Áttekintés fülön válaszolj a mai órára, vagy lent rögzíts egy régebbit."}</div>`;
     return;
@@ -498,15 +796,15 @@ function renderHistory(){
 
 function renderPick(){
   const inp = $("pick-date"); inp.max = today();
+  if (inp.value !== ui.pickDate) inp.value = ui.pickDate;
   if (!ui.pickDate){ $("pick-out").innerHTML = `<p>Válassz dátumot, és megjelennek az aznapi magyarórák.</p>`; return; }
   const ls = lessonsOn(ui.pickDate);
-  $("pick-out").innerHTML = ls.length ? ls.map(askCard).join("") : `<p>Ezen a napon az órarend szerint nincs magyaróra.</p>`;
+  $("pick-out").innerHTML = ls.length ? ls.map(askCard).join("") : `<p>${isBreak(ui.pickDate) ? "Ez a nap tanítási szünetre esik." : "Ezen a napon az órarend szerint nincs magyaróra."}</p>`;
 }
 
 function renderView(){
   const v = ui.view;
-  $("view-fo").hidden = v !== "fo";
-  $("view-elozmenyek").hidden = v !== "elozmenyek";
+  ["fo","statisztika","elozmenyek"].forEach(x => $("view-" + x).hidden = v !== x);
   document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.view === v));
 }
 
@@ -514,9 +812,26 @@ function render(){
   const ae = document.activeElement;
   const fid = ae && ae.id && ae.tagName === "INPUT" && ae.dataset.topic ? ae.id : null;
   const sel = fid ? ae.selectionStart : null;
-  renderNotes(); renderView(); renderToday(); renderStats(); renderHistory(); renderPick();
+  hideTip();
+  const s = computeStats();
+  renderNotes(); renderView(); renderToday(); renderNext(s); renderKpis(s); renderCal(); renderStats(s); renderHistory(); renderPick();
   if (fid){ const el = $(fid); if (el){ el.focus(); try { el.setSelectionRange(sel, sel); } catch(e){} } }
 }
+
+/* ---------- tooltip ---------- */
+const tip = $("tip");
+function hideTip(){ tip.classList.remove("show"); }
+function showTip(el){
+  tip.innerHTML = el.dataset.tip; tip.classList.add("show");
+  const r = el.getBoundingClientRect(); const tw = tip.offsetWidth, th = tip.offsetHeight;
+  let x = r.left + r.width/2 - tw/2; x = Math.max(8, Math.min(x, window.innerWidth - tw - 8));
+  let y = r.top - th - 8; if (y < 60) y = r.bottom + 8;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+document.addEventListener("pointerover", e => { const el = e.target.closest("[data-tip]"); if (el) showTip(el); else hideTip(); });
+document.addEventListener("focusin", e => { const el = e.target.closest("[data-tip]"); if (el) showTip(el); });
+document.addEventListener("focusout", hideTip);
+window.addEventListener("scroll", hideTip, {passive:true});
 
 /* ---------- események ---------- */
 document.addEventListener("click", e => {
@@ -532,15 +847,27 @@ document.addEventListener("click", e => {
   } else if (act === "topic"){
     saveTopic(id);
   } else if (act === "edit"){
-    ui.editing = ui.editing === id ? null : id; ui.confirmDel = null; render();
+    ui.editing = ui.editing === id ? null : id; ui.confirmDel = null; ui.flash = null; render();
   } else if (act === "close"){
     ui.editing = null; ui.confirmDel = null; render();
   } else if (act === "del"){
     if (ui.confirmDel === id) remove(id); else { ui.confirmDel = id; render(); }
   } else if (act === "filter"){
     ui.filter = b.dataset.v; render();
+  } else if (act === "jump"){
+    jump(id);
   }
 });
+function jump(id){
+  if (records.has(id)){
+    go("elozmenyek"); ui.filter = "mind"; ui.editing = id; ui.flash = id; render();
+    const el = $("row-" + id); if (el) el.scrollIntoView({block:"center"});
+  } else {
+    ui.pickDate = id.split("_")[0];
+    go("elozmenyek");
+    $("add-sec").scrollIntoView({block:"start"});
+  }
+}
 function saveTopic(id){
   const l = lessonById(id); if (!l) return;
   const val = (ui.drafts[id] ?? "").trim();
@@ -557,13 +884,14 @@ document.addEventListener("keydown", e => {
   if (e.key === "Enter" && t.dataset && t.dataset.topic){ e.preventDefault(); saveTopic(t.dataset.topic); t.blur(); }
 });
 
+const VIEWS = ["fo","statisztika","elozmenyek"];
 function go(v){
-  ui.view = v; ui.editing = null; ui.confirmDel = null;
+  ui.view = v; ui.editing = null; ui.confirmDel = null; ui.flash = null;
   const h = v === "fo" ? "" : "#" + v;
   if (location.hash !== h){ try { history.replaceState(null, "", h || location.pathname + location.search); } catch(e){ location.hash = h; } }
   render(); window.scrollTo({top:0});
 }
-function fromHash(){ ui.view = location.hash === "#elozmenyek" ? "elozmenyek" : "fo"; render(); }
+function fromHash(){ const h = location.hash.slice(1); ui.view = VIEWS.includes(h) ? h : "fo"; render(); }
 window.addEventListener("hashchange", fromHash);
 
 /* ---------- indulás ---------- */
